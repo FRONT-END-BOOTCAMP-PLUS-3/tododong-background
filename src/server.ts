@@ -6,7 +6,6 @@ const httpServer = createServer();
 
 const io = new Server(httpServer, {
   cors: {
-    // origin: '*',
     origin: 'https://tododong.com',
     methods: ['GET', 'POST'],
   },
@@ -29,6 +28,6 @@ io.on('connection', (socket) => {
   });
 });
 
-httpServer.listen(port, '0.0.0.0', () => {
+httpServer.listen({ port, host: '0.0.0.0' }, () => {
   console.log(`🚀 Socket.IO 서버 실행 중: http://0.0.0.0:${port}`);
 });
