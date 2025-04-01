@@ -11,13 +11,13 @@ const localRepository = new PrGameRepository();
 cron.schedule(
   '*/10 * * * * *',
   async () => {
-    console.log('[NBA Migration] 시작: ', new Date().toISOString());
+    console.log('[NBA Today Migration] 시작: ', new Date().toISOString());
 
     try {
       await migrateTodayGamesToLocalUsecase(externalRepository, localRepository);
-      console.log('[NBA Migration] 성공적으로 완료됨.');
+      console.log('[NBA Today Migration] 성공적으로 완료됨.');
     } catch (error) {
-      console.error('[NBA Migration] 오류 발생:', error);
+      console.error('[NBA Today Migration] 오류 발생:', error);
     }
   },
   {
@@ -29,13 +29,13 @@ cron.schedule(
 cron.schedule(
   '0 0 * * *',
   async () => {
-    console.log('[NBA Migration2] 시작: ', new Date().toISOString());
+    console.log('[NBA Season Migration] 시작: ', new Date().toISOString());
 
     try {
       await migrateScheduleToLocalUsecase(externalRepository, localRepository);
-      console.log('[NBA Migration2] 성공적으로 완료됨.');
+      console.log('[NBA Season Migration] 성공적으로 완료됨.');
     } catch (error) {
-      console.error('[NBA Migration2] 오류 발생:', error);
+      console.error('[NBA Season Migration] 오류 발생:', error);
     }
   },
   {
