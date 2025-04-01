@@ -72,69 +72,94 @@ interface GameDetails {
 interface GameInfo {
   game: GameDetails;
 }
-
 export class NbaOfficialGameRpository implements NbaGameRepository {
   async findAll(): Promise<Game[]> {
-    const url = process.env.NBA_SEASON_SCHEDULE_URL;
+    try {
+      const url = process.env.NBA_SEASON_SCHEDULE_URL;
 
-    const response = await fetch(url as string);
-    const result = await response.json();
+      if (!url) {
+        throw new Error('NBA_SEASON_SCHEDULE_URL is not defined');
+      }
 
-    const games: Game[] = result.leagueSchedule.gameDates.flatMap((gameDate: GameDate): Game[] =>
-      gameDate.games
-        .filter((game: GameDetail) => game.gameLabel === '' || game.gameLabel.includes('NBA Cup'))
-        .map((game: GameDetail) => {
-          const homeTeam = game.homeTeam;
-          const awayTeam = game.awayTeam;
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch data: ${response.statusText}`);
+      }
 
-          return {
-            id: game.gameId,
-            season: parseInt(result.leagueSchedule.seasonYear),
-            status: game.gameStatus.toString(),
-            arenaName: game.arenaName,
-            awayTeamId: awayTeam.teamId.toString(),
-            awayTeamPeriods: [],
-            awayTeamScore: awayTeam.score,
-            homeTeamId: homeTeam.teamId.toString(),
-            homeTeamPeriods: [],
-            homeTeamScore: homeTeam.score,
-            date: '',
-            startTime: game.gameDateTimeUTC,
-          };
-        })
-    );
+      const result = await response.json();
 
-    return games;
+      const games: Game[] = result.leagueSchedule.gameDates.flatMap((gameDate: GameDate): Game[] =>
+        gameDate.games
+          .filter((game: GameDetail) => game.gameLabel === '' || game.gameLabel.includes('NBA Cup'))
+          .map((game: GameDetail) => {
+            const homeTeam = game.homeTeam;
+            const awayTeam = game.awayTeam;
+
+            return {
+              id: game.gameId,
+              season: parseInt(result.leagueSchedule.seasonYear),
+              status: game.gameStatus.toString(),
+              arenaName: game.arenaName,
+              awayTeamId: awayTeam.teamId.toString(),
+              awayTeamPeriods: [],
+              awayTeamScore: awayTeam.score,
+              homeTeamId: homeTeam.teamId.toString(),
+              homeTeamPeriods: [],
+              homeTeamScore: homeTeam.score,
+              date: '',
+              startTime: game.gameDateTimeUTC,
+            };
+          })
+      );
+
+      return games;
+    } catch (error) {
+      console.error('Error in findAll:', error);
+      throw new Error('Failed to fetch all games');
+    }
   }
 
   async findTodayGame(): Promise<Game[]> {
-    const url = process.env.NBA_TODAYS_SCOREBOARD_URL;
+    try {
+      const url = process.env.NBA_TODAYS_SCOREBOARD_URL;
 
-    const response = await fetch(url as string);
-    const data: Scoreboard = await response.json();
+      if (!url) {
+        throw new Error('NBA_TODAYS_SCOREBOARD_URL is not defined');
+      }
 
-    const games: Game[] = data.scoreboard.games
-      .map((game: TodayGameDetail) => ({
-        id: game.gameId,
-        season: 0,
-        status: game.gameStatus.toString(),
-        arenaName: '',
-        awayTeamId: game.awayTeam.teamId.toString(),
-        awayTeamPeriods: game.awayTeam.periods.map((p) => p.score),
-        awayTeamScore: game.awayTeam.score,
-        homeTeamId: game.homeTeam.teamId.toString(),
-        homeTeamPeriods: game.homeTeam.periods.map((p) => p.score),
-        homeTeamScore: game.homeTeam.score,
-        date: '',
-        startTime: game.gameTimeUTC,
-      }))
-      .sort((a, b) => {
-        const dateA = new Date(a.startTime);
-        const dateB = new Date(b.startTime);
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch data: ${response.statusText}`);
+      }
 
-        return dateA.getTime() - dateB.getTime() || parseInt(a.id) - parseInt(b.id); // 시간, id 오름차순 정렬
-      });
+      const data: Scoreboard = await response.json();
 
-    return games;
+      const games: Game[] = data.scoreboard.games
+        .map((game: TodayGameDetail) => ({
+          id: game.gameId,
+          season: 0,
+          status: game.gameStatus.toString(),
+          arenaName: '',
+          awayTeamId: game.awayTeam.teamId.toString(),
+          awayTeamPeriods: game.awayTeam.periods.map((p) => p.score),
+          awayTeamScore: game.awayTeam.score,
+          homeTeamId: game.homeTeam.teamId.toString(),
+          homeTeamPeriods: game.homeTeam.periods.map((p) => p.score),
+          homeTeamScore: game.homeTeam.score,
+          date: '',
+          startTime: game.gameTimeUTC,
+        }))
+        .sort((a, b) => {
+          const dateA = new Date(a.startTime);
+          const dateB = new Date(b.startTime);
+
+          return dateA.getTime() - dateB.getTime() || parseInt(a.id) - parseInt(b.id); // 시간, id 오름차순 정렬
+        });
+
+      return games;
+    } catch (error) {
+      console.error('Error in findTodayGame:', error);
+      throw new Error("Failed to fetch today's games");
+    }
   }
 }
