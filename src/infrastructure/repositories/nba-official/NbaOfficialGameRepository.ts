@@ -72,6 +72,19 @@ interface GameDetails {
 interface GameInfo {
   game: GameDetails;
 }
+
+const LABELS = [
+  '',
+  'Emirates NBA Cup',
+  'SoFi Play-In Tournament',
+  'East First Round',
+  'West First Round',
+  'East Conf. Semifinals',
+  'West Conf. Semifinals',
+  'East Conf. Finals',
+  'West Conf. Finals',
+  'NBA Finals',
+];
 export class NbaOfficialGameRpository implements NbaGameRepository {
   async findAll(): Promise<Game[]> {
     try {
@@ -88,28 +101,36 @@ export class NbaOfficialGameRpository implements NbaGameRepository {
 
       const result = await response.json();
 
-      const games: Game[] = result.leagueSchedule.gameDates.flatMap((gameDate: GameDate): Game[] =>
-        gameDate.games
-          .filter((game: GameDetail) => game.gameLabel === '' || game.gameLabel.includes('NBA Cup'))
-          .map((game: GameDetail) => {
-            const homeTeam = game.homeTeam;
-            const awayTeam = game.awayTeam;
+      const games: Game[] = result.leagueSchedule.gameDates.flatMap(
+        (gameDate: GameDate): Game[] =>
+          gameDate.games
+            .filter((game: GameDetail) => {
+              const hasValidLabel = LABELS.includes(game.gameLabel);
 
-            return {
-              id: game.gameId,
-              season: parseInt(result.leagueSchedule.seasonYear),
-              status: game.gameStatus.toString(),
-              arenaName: game.arenaName,
-              awayTeamId: awayTeam.teamId.toString(),
-              awayTeamPeriods: [],
-              awayTeamScore: awayTeam.score,
-              homeTeamId: homeTeam.teamId.toString(),
-              homeTeamPeriods: [],
-              homeTeamScore: homeTeam.score,
-              date: '',
-              startTime: game.gameDateTimeUTC,
-            };
-          })
+              const hasValidTeam =
+                game.awayTeam.teamId !== 0 && game.homeTeam.teamId !== 0;
+
+              return hasValidLabel && hasValidTeam;
+            })
+            .map((game: GameDetail) => {
+              const homeTeam = game.homeTeam;
+              const awayTeam = game.awayTeam;
+
+              return {
+                id: game.gameId,
+                season: parseInt(result.leagueSchedule.seasonYear),
+                status: game.gameStatus.toString(),
+                arenaName: game.arenaName,
+                awayTeamId: awayTeam.teamId.toString(),
+                awayTeamPeriods: [],
+                awayTeamScore: awayTeam.score,
+                homeTeamId: homeTeam.teamId.toString(),
+                homeTeamPeriods: [],
+                homeTeamScore: homeTeam.score,
+                date: '',
+                startTime: game.gameDateTimeUTC,
+              };
+            })
       );
 
       return games;
@@ -153,7 +174,9 @@ export class NbaOfficialGameRpository implements NbaGameRepository {
           const dateA = new Date(a.startTime);
           const dateB = new Date(b.startTime);
 
-          return dateA.getTime() - dateB.getTime() || parseInt(a.id) - parseInt(b.id); // 시간, id 오름차순 정렬
+          return (
+            dateA.getTime() - dateB.getTime() || parseInt(a.id) - parseInt(b.id)
+          ); // 시간, id 오름차순 정렬
         });
 
       return games;
