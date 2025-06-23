@@ -7,7 +7,7 @@ import { PrGameRepository } from './infrastructure/repositories/prisma/PrGameRep
 const externalRepository = new NbaOfficialGameRpository();
 const localRepository = new PrGameRepository();
 
-// 매시간 0분마다 실행 (UTC 기준)
+// 10초마다 실행 (UTC 기준)
 cron.schedule(
   '*/10 * * * * *',
   async () => {
